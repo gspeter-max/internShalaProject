@@ -1,0 +1,26 @@
+[project]
+name = "multiagent"
+version = "0.1.0"
+description = "MultiAgent using crewAI"
+authors = [{ name = "gs.peter", email = "gspeter@gmail.com" }]
+requires-python = ">=3.10,<3.14"
+dependencies = [
+    "crewai[tools]>=0.175.0,<1.0.0",
+    "numpy==1.26.4",
+    "pydantic>=2.11.7",
+    "transformers>=4.46.3",
+]
+
+[project.scripts]
+multiagent = "multiagent.main:run"
+run_crew = "multiagent.main:run"
+train = "multiagent.main:train"
+replay = "multiagent.main:replay"
+test = "multiagent.main:test"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.crewai]
+type = "crew"
