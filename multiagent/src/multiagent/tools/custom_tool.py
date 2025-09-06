@@ -103,7 +103,7 @@ class WriteFileAndCreateTool( BaseTool ):
     name : str = "WriteFileAndCreateTool"
     description: str = "Creates a new file with a specified name and format, and writes string content into it. Essential for saving research, notes, or structured data for later use by other agents."
 
-    args_schema : typing.Optional[BaseTool] = WriteFileAndCreateInput
+    args_schema : typing.Type[BaseTool] = WriteFileAndCreateInput
 
     async def _run( self, content : str , file_name : str , file_format : str ):
         if isinstance( content , bytes):
@@ -124,7 +124,7 @@ class WriteFileAndCreateTool( BaseTool ):
 class ReadFileAndSummarizeTool( BaseTool ):
     name : str = 'ReadFileAndSummarizeTool'
     description: str = "Reads the content of a specified file (text or image) and uses a multimodal AI to generate a concise summary of its contents. Perfect for understanding data saved by other agents."
-    args_schema : typing.Optional[ BaseModel ] = ReadFileAndSummarizeInput
+    args_schema : typing.Type[ BaseModel ] = ReadFileAndSummarizeInput
 
     async def _run( self, file_name : str , file_format : str ):
         
