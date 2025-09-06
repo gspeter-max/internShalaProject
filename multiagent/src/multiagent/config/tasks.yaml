@@ -1,0 +1,110 @@
+# tasks.yaml - UPGRADED FOR ELITE-LEVEL OUTPUT
+research_task:
+  agent: Researcher
+  description: >
+    **Objective:** Execute a focused intelligence operation on the financial performance 
+    of '{topic}' for the most recent trading day.  
+    **Directive:** Use the `SerperDevTool` exclusively to retrieve precise, verifiable, 
+    first-tier data. Discard general articles, speculation, and commentary.  
+    **Required Intelligence Targets:**  
+    1. Official closing price.  
+    2. Exact percentage change for the day (e.g., +1.5% or -2.1%).  
+    3. Reported trading volume.  
+    4. The top 2–3 news headlines or market events explicitly cited as drivers of the 
+       stock’s movement.  
+    Each data point must be sourced from a reputable, primary outlet (e.g., Reuters, AP, 
+    Bloomberg, official exchange feeds, or company releases).
+  expected_output: >
+    Deliver a structured intelligence brief in Markdown containing **only** verified facts.  
+    Each entry must be paired with a direct source URL.  
+    **Format Specification:**  
+    - Closing Price: $XXX.XX (Source: https://...)  
+    - Daily Change: +X.X% (Source: https://...)  
+    - Volume: XM (Source: https://...)  
+    - Key Driver: "Exact headline or event description." (Source: https://...)  
+    - Key Driver: "Exact headline or event description." (Source: https://...)  
+    No filler text, no analysis — facts only.
+
+
+summary_writer_task:
+  agent: SummaryWriter
+  description: >
+    **Objective:** Convert the Researcher's structured data report into a high-impact, executive-grade briefing tailored for the 'afterUsMarket' channel.  
+    **Directive:** Deliver clarity and insight, not just facts. Explicitly connect market movements to their underlying causes and articulate their potential implications.  
+    **Tone:** Professional, concise, and immediately understandable by executives, investors, and analysts. Avoid fluff or jargon.  
+  expected_output: >
+    A polished Markdown report that must strictly follow this format:
+    1. **Title:** A commanding, fact-driven headline (e.g., `# NVDA Daily Debrief: Surges on AI Partnership News`).  
+    2. **Top-Line Summary:** A single, powerful sentence summarizing the performance (e.g., `NVIDIA (NVDA) closed at $120.50, gaining +3.2% on heavy trading volume.`).  
+    3. **Key Drivers:** A clear bulleted list that directly links each news/event to the stock’s movement.  
+    4. **Strategic Implication (Optional):** One line highlighting what this means for investors, sectors, or the market narrative.  
+
+visualization_task:
+  agent: Visualizer
+  description: >
+    **Objective:** Generate a professional, financial-report-quality data visualization that highlights the most critical performance metric for '{topic}'.  
+    **Directive:**  
+    - Your mission is to engineer a world-class prompt for the `ImageGenerationTool`.  
+    - The resulting image must be clean, minimalist, and compatible with Telegram dark mode.  
+    - Prioritize precision, clarity, and professional design — similar to Bloomberg, Reuters, or FactSet visuals.  
+    - The visualization must spotlight only the essential metrics (e.g., closing price, % daily change, trading volume).  
+    **Style Requirements:**  
+    - Minimalist layout, sharp modern fonts, professional color coding (green = gains, red = losses).  
+    - No unnecessary clutter or artistic distractions.  
+    - Presentation should feel authoritative, as if prepared for an institutional market briefing.  
+  expected_output: >
+    A mission success confirmation string that reads exactly:  
+    `'image.png' has been successfully generated and is ready for immediate dispatch.`  ss confirmation string that explicitly states: "'image.png' has been successfully generated and is ready for immediate dispatch."
+
+translation_task:
+  agent: translator
+  description: >
+    **Codename:** 'Babel' — Diplomatic Corps Linguist.  
+    **Objective:** Execute a full linguistic and cultural transposition of the
+    strategic narrative on '{topic}' into '{language}'.  
+    **Directive:**  
+    - Preserve the authority, tone, and nuance of the original.  
+    - Adapt idioms, financial terminology, and cultural references to read as if
+      authored natively for a '{language}' executive audience.  
+    - Maintain strategic weight: concise, professional, and suitable for publication
+      or diplomatic briefing without further editing.  
+  expected_output: >
+    The finalized translation in Markdown format.  
+    - Must be flawless: no grammatical errors, awkward phrasing, or literal carryovers.  
+    - Must read with the natural authority of a native '{language}' author.  
+    - Headings, lists, and structure must mirror the original.  
+  dependencies: [summary_writer_task]
+  async_execution: true
+
+send_summary_task:
+  agent: telegram_sender
+  description: >
+    **Codename:** 'Relay' — Automated Dispatch System.  
+    **Objective:** Deliver the final, text-based strategic narrative to the
+    designated Telegram channel.  
+    **Directive:**  
+    - Use the `SendTextInTelegramChannel` tool to transmit the complete,
+      polished brief received from the upstream tasks.  
+    - This is the authoritative text body of the market report; precision and
+      reliability are critical.  
+  expected_output: >
+    A raw API response string returned directly from Telegram,
+    serving as a delivery confirmation that the text payload has been
+    successfully transmitted.  
+  dependencies: [summary_writer_task, translation_task]
+
+send_image_task:
+  agent: telegram_sender
+  description: >
+    **Codename:** 'Relay' — Automated Dispatch System.  
+    **Objective:** Deliver the final, image-based visual asset to the designated
+    Telegram channel.  
+    **Directive:**  
+    - Use the `SendImageInTelegramChannel` tool to transmit the 'image.png' file.  
+    - This visual payload is mission-critical; it must accompany the strategic
+      text report to provide a full market briefing package.  
+  expected_output: >
+    A raw API response string returned directly from Telegram,
+    serving as a delivery confirmation that the visual payload has been
+    successfully transmitted.  
+  dependencies: [visualization_task]
