@@ -1,2 +1,2 @@
-# intershalaproject
+# internshalaproject
  - telegram bot 
