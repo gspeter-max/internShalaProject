@@ -57,7 +57,7 @@ def summarization_logic( summarizationClass : CreateSummary , client ):
 _summary_class = CreateSummary() 
 
 @app.post('/v2/getResponse')
-def get_response(userquery : ChatCompletionMessageParam ):
+async def get_response(userquery : ChatCompletionMessageParam ):
     global global_token_counter
     global _summary_class 
     try:
@@ -93,40 +93,42 @@ def get_response(userquery : ChatCompletionMessageParam ):
         )
 
         for tool_metadata in response.choices[0].message.tool_calls:
-            tools_args = tool_metadata.function.arguments
+
+            tool_args_in_str  = tool_metadata.function.arguments
+            tool_args_in_json = json.loads(tool_args_in_str)
+
             function_name = tool_metadata.function.name
 
             function_object = available_function_tool_name[function_name]
-            function_response = function_object(**tools_args)
+            function_response = await function_object(**tool_args_in_json)
 
             if userquery.care_about_task2 is True:
-                return function_response
+                return {"args_for_next_function": function_response }
 
             json_format_function_response = json.dumps({
-                "tools_calling_id": tool_metadata.id,
+                "tool_call_id": tool_metadata.id,
                 "role": "tool",
-                "tool_name": function_name,
                 "content": function_response
             })
-
-            llm_input_message.append( json_format_function_response )
+            
+            llm_input_message.append( json.loads(json_format_function_response) )
 
         final_response = client.chat.completions.create(
             messages= llm_input_message,
             model= 'gemma2-9b-it'
-        )
+        ).choices[0].message.content
         
         # if len(tokenizer.tokenize(response)) >= max_token_posible_in_output:
-        if len(response) >= max_token_posible_in_output:
+        if len(final_response) >= max_token_posible_in_output:
 
-            _o4th_path = int(len(response) / 5) 
-            return_response = f'{response[:_o4th_path]} </---------/>  {response[-_o4th_path :]}'
+            _o5th_path = int(len(final_response) / 5) 
+            return_response = f'{final_response[:_o5th_path]} </---------/>  {final_response[-_o5th_path :]}'
         else:
-            return_response = response
+            return_response = final_response
 
-        _summary_class.summary.append(f'userquery : {userquery.content}  llmRespose : {response}')
+        _summary_class.summary.append(f'userquery : {userquery.content}  llmRespose : {final_response}')
         return {'response' : return_response }  
     
     except Exception as e:
-        return {"error": "got error during getting response from llm due to : {e}"}
+        return {"error": f"got error during getting response from llm due to : {e}"}
 
