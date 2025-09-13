@@ -1,9 +1,11 @@
 # from transformers import  AutoTokenizer 
 import typing 
+import json 
 from groq import Groq 
 from fastapi import FastAPI
 # from dotenv import load_dotenv
 from pydantic import BaseModel 
+from getFunctionCallling import available_function_tool_name, tools 
 import os
 
 app = FastAPI() 
@@ -11,6 +13,7 @@ class ChatCompletionMessageParam( BaseModel ):
     role : str 
     content : typing.Union[dict[str, str], str ]
     GroqApiKey: str 
+    care_about_task2 : bool
 
 
 
@@ -24,7 +27,7 @@ maximum_tokens = 1000
 global_token_counter = 0 
 keep_noOf_message = 20
 k_messages_feed_into_llm = 3
-max_token_posible_in_output = 100
+max_token_posible_in_output = 1000
 
 if keep_noOf_message < k_messages_feed_into_llm:
     raise RuntimeError(f'keep_noOf_message must be lower than k_messages_feed_into_llm  ( {keep_noOf_message} < {k_messages_feed_into_llm  }) ')
@@ -76,15 +79,42 @@ def get_response(userquery : ChatCompletionMessageParam ):
         else:
             content = f"past summary of conversation : {_summary_class.summary[:k_messages_feed_into_llm]} \n\n" + f"current user_qestion : {userquery.content}" 
             
-        response = client.chat.completions.create(
-            messages=[
+
+        llm_input_message = [
                 {
                     "role": userquery.role,
                     "content" : content
                 }
-            ],
-            model = 'gemma2-9b-it'
-        ).choices[0].message.content
+            ]
+        response = client.chat.completions.create(
+            messages=llm_input_message,
+            model = 'gemma2-9b-it',
+            tools= tools
+        )
+
+        for tool_metadata in response.choices[0].message.tool_calls:
+            tools_args = tool_metadata.function.arguments
+            function_name = tool_metadata.function.name
+
+            function_object = available_function_tool_name[function_name]
+            function_response = function_object(**tools_args)
+
+            if userquery.care_about_task2 is True:
+                return function_response
+
+            json_format_function_response = json.dumps({
+                "tools_calling_id": tool_metadata.id,
+                "role": "tool",
+                "tool_name": function_name,
+                "content": function_response
+            })
+
+            llm_input_message.append( json_format_function_response )
+
+        final_response = client.chat.completions.create(
+            messages= llm_input_message,
+            model= 'gemma2-9b-it'
+        )
         
         # if len(tokenizer.tokenize(response)) >= max_token_posible_in_output:
         if len(response) >= max_token_posible_in_output:
