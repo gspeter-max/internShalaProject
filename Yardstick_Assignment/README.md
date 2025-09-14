@@ -15,7 +15,7 @@ This document summarizes the main technologies and features added to the `Yardst
 - **Groq API**:  
   Used for LLM (Large Language Model) chat completions and text summarization.
 
-- **Transformers**:  
+- **Transformers** ( this code is committed ):  
   (Commented out) For tokenization and model loading from Hugging Face.
 
 ---
