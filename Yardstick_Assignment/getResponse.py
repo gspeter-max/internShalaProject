@@ -88,10 +88,42 @@ async def get_response(userquery : ChatCompletionMessageParam ):
             ]
         response = client.chat.completions.create(
             messages=llm_input_message,
+            model = 'gemma2-9b-it'
+        ).choices[0].message.content
+       
+        # if len(tokenizer.tokenize(response)) >= max_token_posible_in_output:
+        if len(response) >= max_token_posible_in_output:
+
+            _o5th_path = int(len(response) / 5) 
+            return_response = f'{response[:_o5th_path]} </---------/>  {response[-_o5th_path :]}'
+        else:
+            return_response = response
+
+        _summary_class.summary.append(f'userquery : {userquery.content}  llmRespose : {response}')
+        return {'response' : return_response }  
+    
+    except Exception as e:
+        return {"error": f"got error during getting response from llm due to : {e}"}
+
+@app.post('/v2/getJsonResponse')
+async def getJsonResponse(userquery : ChatCompletionMessageParam ):
+    try:
+
+        client = Groq( api_key = userquery.GroqApiKey )
+
+        llm_input_message = [
+                {
+                    "role": userquery.role,
+                    "content" : userquery.content
+                }
+            ]
+        response = client.chat.completions.create(
+            messages=llm_input_message,
             model = 'gemma2-9b-it',
             tools= tools
         )
 
+        # for now ,we are assume we have only one tool
         for tool_metadata in response.choices[0].message.tool_calls:
 
             tool_args_in_str  = tool_metadata.function.arguments
@@ -102,33 +134,22 @@ async def get_response(userquery : ChatCompletionMessageParam ):
             function_object = available_function_tool_name[function_name]
             function_response = await function_object(**tool_args_in_json)
 
-            if userquery.care_about_task2 is True:
-                return {"args_for_next_function": function_response }
+            # if userquery.care_about_task2 is True:
+            return {"args_for_next_function": function_response }
 
-            json_format_function_response = json.dumps({
-                "tool_call_id": tool_metadata.id,
-                "role": "tool",
-                "content": function_response
-            })
+        #     json_format_function_response = json.dumps({
+        #         "tool_call_id": tool_metadata.id,
+        #         "role": "tool",
+        #         "content": function_response
+        #     })
             
-            llm_input_message.append( json.loads(json_format_function_response) )
+        #     llm_input_message.append( json.loads(json_format_function_response) )
 
-        final_response = client.chat.completions.create(
-            messages= llm_input_message,
-            model= 'gemma2-9b-it'
-        ).choices[0].message.content
+        # final_response = client.chat.completions.create(
+        #     messages= llm_input_message,
+        #     model= 'gemma2-9b-it'
+        # ).choices[0].message.content
         
-        # if len(tokenizer.tokenize(response)) >= max_token_posible_in_output:
-        if len(final_response) >= max_token_posible_in_output:
-
-            _o5th_path = int(len(final_response) / 5) 
-            return_response = f'{final_response[:_o5th_path]} </---------/>  {final_response[-_o5th_path :]}'
-        else:
-            return_response = final_response
-
-        _summary_class.summary.append(f'userquery : {userquery.content}  llmRespose : {final_response}')
-        return {'response' : return_response }  
-    
+        # return {'json_response': final_response}
     except Exception as e:
-        return {"error": f"got error during getting response from llm due to : {e}"}
-
+        return {'error': f"{e}"}
