@@ -8,9 +8,7 @@ app = FastAPI(
     title="Viral Video Script Generator API",
     description="An API to generate production-ready video scripts using LLMs on Groq.",
 )
-
 app.include_router( Voice_router )
 app.include_router( Script_router)
 app.include_router( video_router )
 app.include_router( full_video_generation_router )
-

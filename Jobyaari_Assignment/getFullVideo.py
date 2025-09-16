@@ -6,6 +6,7 @@ import requests
 from fastapi import APIRouter
 import typing 
 import os 
+from moviepy import CompositeVideoClip
 import moviepy 
 from pydantic import BaseModel 
 
@@ -25,6 +26,9 @@ async def get_full_video(user_input : __getFullVideoInput):
         content_generation_args = args_for_video_generation_content( content = user_input.user_prompt)
         generated_script = await get_content_for_video_generation( content_generation_args )
 
+
+        text_caption = moviepy.TextClip(text = generated_script.full_script, font_size = 20, color = 'black')
+
         # voice_url = 'http://127.0.0.1:8000/v2/getVoice'
         # headers = {"Content-Type": "application/json"}
         # json_data = {
@@ -32,6 +36,7 @@ async def get_full_video(user_input : __getFullVideoInput):
         #     "user_prompt": user_input.user_prompt
         # }
         # response = requests.post( url = voice_url, headers= headers , json = json_data )
+
         user_prompt = { "generated_content": generated_script.full_script }
         voice_generation_args = __voice_input( voice_id = user_input.voice_id, user_prompt= user_prompt)
         response = await __getVoice( voice_generation_args )
@@ -48,16 +53,18 @@ async def get_full_video(user_input : __getFullVideoInput):
         print(response)
 
 
-        video_file = moviepy.VideoFileClip('Jobyaari_Assignment/video.mp4')
-        audio_file = moviepy.AudioFileClip( 'Jobyaari_Assignment/music.mp3')
+        video_file = moviepy.VideoFileClip(' Jobyaari_Assignment/video.mp4 ')
+        audio_file = moviepy.AudioFileClip(' Jobyaari_Assignment/music.mp3 ')
 
         final_duration = min( video_file.duration, audio_file.duration)
         final_audio = audio_file.subclipped( end_time = final_duration )
         final_video = video_file.subclipped( end_time = final_duration )
 
         final_video = final_video.with_audio(final_audio)
-        final_video.write_videofile('Jobyaari_Assignment/final_video.mp4')
+        final_text = text_caption.subclipped( final_video.duration )
 
+        final_video = CompositeVideoClip([final_video, final_text])
+        final_video.write_videofile('Jobyaari_Assignment/final_video.mp4')
         subprocess.call('rm -rf Jobyaari_Assignment/video.mp4 Jobyaari_Assignment/music.mp3',shell = True )
 
         return {"response" : {"message": f"file is stored at {os.getcwd()}/video.mp4", "status": "success"}}
