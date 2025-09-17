@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from Jobyaari_Assignment.SendToSheet.sendorUpdate import googleSheetRouter
+from Jobyaari_Assignment.SendToGoogle.sendorUpdate import google_send_router
 from Jobyaari_Assignment.getScript import  Script_router
 from Jobyaari_Assignment.getVoice import Voice_router
 from Jobyaari_Assignment.getVideo import video_router
@@ -12,8 +12,8 @@ app = FastAPI(
 )
 
 app.include_router( Voice_router )
-app.include_router( Script_router)
+app.include_router( Script_router )
 app.include_router( video_router )
 app.include_router( full_video_generation_router )
-app.include_router( googleSheetRouter )
+app.include_router( google_send_router )
 app.include_router( make_content_router )

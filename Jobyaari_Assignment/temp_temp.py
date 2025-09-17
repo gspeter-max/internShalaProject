@@ -4,8 +4,6 @@ headers = {
         "Content-Type": "application/json"
     }
 
-
-
 json_data = {
     "user_prompt": f"generate video for ai and machine learning ",
     "voice_id": 'bIHbv24MWmeRgasZH58o',
