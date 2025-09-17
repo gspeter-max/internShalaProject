@@ -1,4 +1,5 @@
 from pygsheets import authorize 
+import json
 from fastapi import APIRouter
 from pydantic import BaseModel 
 import typing 
@@ -56,7 +57,7 @@ def update_sheet( data : __update_sheet_input):
                 cell.color = COLOR_WHITE
             
         
-        return {'response': "data is correctly sended to the google sheet"} 
+        return  {'response': "data is correctly sended to the google sheet"} 
         
     except Exception as e:
-        return {"response": {"error": f"get an error during send data to google sheet  due to : {e}"}}
+        return  {"response": {"error": f"get an error during send data to google sheet  due to : {e}"}}

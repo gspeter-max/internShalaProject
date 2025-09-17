@@ -1,11 +1,19 @@
-import moviepy
+import requests 
 
-video_file = moviepy.VideoFileClip('video.mp4')
-audio_file = moviepy.AudioFileClip( 'music.mp3')
+headers = {
+        "Content-Type": "application/json"
+    }
 
-final_duration = min( video_file.duration, audio_file.duration)
-final_audio = audio_file.subclipped( end_time = final_duration )
-final_video = video_file.subclipped( end_time = final_duration )
 
-final_video = final_video.with_audio(final_audio)
-final_video.write_videofile('final_video.mp4')
+
+json_data = {
+    "user_prompt": f"generate video for ai and machine learning ",
+    "voice_id": 'bIHbv24MWmeRgasZH58o',
+    "video_name": f'video1' 
+}
+
+response = requests.post(
+    'http://127.0.0.1:8000/v2/getFullVideo' ,
+    headers = headers,
+    json = json_data   
+    )

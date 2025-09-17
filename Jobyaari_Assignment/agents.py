@@ -1,7 +1,9 @@
 from oauth2client.tools import _CLIENT_SECRETS_MESSAGE
+import json
 import typing
 from pydantic import BaseModel
 from groq import Groq 
+import requests
 import os 
 from fastapi import APIRouter
 
@@ -164,8 +166,7 @@ class __generate_insta_post_input( BaseModel ):
     title_data : typing.List[str]
     
 class __generate_insta_post_output( BaseModel ):
-    response : str 
-    content : typing.List[str]
+    response : typing.Union[str , typing.Dict[str, typing.Union[typing.List, str]]]
 
 @make_content_router.post('/v2/getInstaContent', response_model = __generate_insta_post_output )
 async def generate_insta_post(userInput : __generate_insta_post_input ):
@@ -174,16 +175,50 @@ async def generate_insta_post(userInput : __generate_insta_post_input ):
         for titles in userInput.title_data:
             client = Groq( api_key = os.environ['GROQ_API_KEY'])
             message = await create_prompt(titles, content_type ='insta')
-            print(f'===============')
-            print( f'message : {message}')
-            print('==================')
             response = client.chat.completions.create(
                 messages = message,
                 model = 'llama-3.3-70b-versatile'
             )
             insta_content.append( response.choices[0].message.content )
         
-        return {'response': "👍 Done", "content" : insta_content }
+        return {"response": "👍 Done", "content" : insta_content }
     
     except Exception as e:
-        return {'response': " 🤯 Faliure", "content" : [f'error: {e}']}
+        return {"response": " 🤯 Faliure", "content" : [f'error: {e}']}
+
+class __generate_youtube_videos_input( BaseModel ):
+    video_topics : typing.List[str]
+
+class __generate_youtube_videos_output( BaseModel ):
+    response : typing.Union[str, typing.Dict[str, typing.Union[typing.List[str], str]]]
+
+@make_content_router.post('/v2/getYoutubeVideos', response_model= __generate_youtube_videos_output )
+async def generate_youtube_videos( userInput : __generate_youtube_videos_input ):
+    youtube_video_paths = [] 
+    headers = {
+        "Content-Type": "application/json"
+    }
+
+    for index,topic in enumerate(userInput.video_topics):
+
+        json_data = {
+            "user_prompt": f"generate video for {topic}",
+            "voice_id": 'bIHbv24MWmeRgasZH58o',
+            "video_name": f'video{index}' 
+        }
+        try:
+            response = requests.post(
+                'http://127.0.0.1:8000/v2/getFullVideo' ,
+                headers = headers,
+                json = json_data   
+                )
+            
+            full_path = response.json()['response']['full_path']
+
+        except Exception as e:
+            youtube_video_paths.append('NOT_GENERATED')
+            return  {"response": {"error": f"get Error during calling generate_youtube_videos function for generating video : {e}", "status" : "failed"}}
+
+        youtube_video_paths.append(full_path)
+    
+    return {"response" : {"videos_path" : youtube_video_paths, "Status": "Done"}}

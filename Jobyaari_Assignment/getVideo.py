@@ -40,20 +40,20 @@ async def get_video( user_input : __VideoInput):
             per_page=10
         )
 
-        final_video = None
-        max_duration_index = None
-        max_duration = 0
-        for index, _videos in enumerate(video_response.videos):
-            if _videos.duration > max_duration :
-                max_duration = _videos.duration
-                max_duration_index = index 
+        # final_video = None
+        # max_duration_index = None
+        # max_duration = 0
+        # for index, _videos in enumerate(video_response.videos):
+        #     if _videos.duration > max_duration :
+        #         max_duration = _videos.duration
+        #         max_duration_index = index 
             
-            if _videos.duration >= 20:
-                final_video = _videos
-                break 
+        #     if _videos.duration == 20:
+        #         final_video = _videos
+        #         break 
             
-        if final_video is None:
-            final_video = video_response.videos[ max_duration_index ]
+        # if final_video is None:
+        #     final_video = video_response.videos[ max_duration_index ]
         
         final_video = video_response.videos[0]
 
@@ -76,8 +76,8 @@ async def get_video( user_input : __VideoInput):
             else:
                 print(f"❌ Failed to download video. Status code: {response.status_code}")
 
-        return {"response" : {"message": f"file is stored at {os.getcwd()}/video.mp4", "status": "success"}}
+        return  {"response" : {"message": f"file is stored at {os.getcwd()}/video.mp4", "status": "success"}}
     except Exception as e:
-        return {"response": {"error": f"get Error during generating video : {e}", "status" : "failed"}}
+        return  {"response": {"error": f"get Error during generating video : {e}", "status" : "failed"}}
 
 

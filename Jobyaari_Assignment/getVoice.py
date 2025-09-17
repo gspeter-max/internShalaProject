@@ -25,13 +25,10 @@ async def __getVoice(voiceInput : __voice_input):
     if isinstance( voiceInput.user_prompt, str):
 
         url = 'http://127.0.0.1:8000/v2/getVideoScript'
-        headers = {
-            'Content-Type': "application/json"
-        }
-        json_data = {
-            "content": voiceInput.user_prompt
-        }
+        headers = {'Content-Type': "application/json"}
+        json_data = { "content": voiceInput.user_prompt}
         __response = requests.post( url = url , headers = headers, json = json_data )
+
         response_content = json.loads(__response.text)['full_script']
     
     elif isinstance( voiceInput.user_prompt, typing.Dict):
@@ -52,4 +49,4 @@ async def __getVoice(voiceInput : __voice_input):
     with open('Jobyaari_Assignment/music.mp3', 'wb') as f:
         f.write(all_bytes)
 
-    return {'full_file_name': 'Jobyaari_Assignment/video.mp4'}
+    return  {"full_file_name": "Jobyaari_Assignment/video.mp4"}
