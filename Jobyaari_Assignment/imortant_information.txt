@@ -1,2 +1,0 @@
-make sure changeout https --> function calling 
-adjust the text that too bad 
