@@ -33,22 +33,24 @@ class __getResponse_output( BaseModel):
 @runnerRouter.post("/v2/runAgents", response_model = __getResponse_output )
 async def _getResponse( userInput : __getResponse_input ):
     try:
-        # raw_data = getResponse(kw_list = userInput.kw_list )
+        # raw_data = getResponse(kw_list = userInput.kw_list ) # this is not work ( too many requests error)
+        print('default raw data is used for this process ')
         raw_data = ''' [
-            "India vs Australia T20",
-            "SSC CGL result 2024 tier 2",
-            "Jawan movie box office collection",
-            "UP Police constable recruitment notification",
-            "Chandrayaan 3 update",
-            "IBPS Clerk admit card download",
-            "Diwali 2024 date",
-            "RRB Group D vacancy",
-            "State Bank of India job openings",
-            "G20 Summit Delhi",
-            "UPSC Civil Services exam date"
+                "India vs Australia T20",
+                "SSC CGL result 2024 tier 2",
+                "Jawan movie box office collection",
+                "UP Police constable recruitment notification",
+                "Chandrayaan 3 update",
+                "IBPS Clerk admit card download",
+                "Diwali 2024 date",
+                "RRB Group D vacancy",
+                "State Bank of India job openings",
+                "G20 Summit Delhi",
+                "UPSC Civil Services exam date"
             ]
             job_keywords = ['result', 'recruitment', 'admit card', 'vacancy', 'job', 'exam', 'notification']    
-            '''
+        #     '''
+        print(f"raw data : {raw_data}")
         generate_data_for_sheet_input = __generate_data_for_sheet_input(raw_content= raw_data)
         sheet_data = await generate_data_for_sheet( generate_data_for_sheet_input )
         sheet_data = ast.literal_eval(sheet_data['response']['content'])
