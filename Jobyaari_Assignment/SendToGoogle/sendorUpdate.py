@@ -1,5 +1,6 @@
 from pygsheets import authorize 
 import json
+import subprocess 
 from fastapi import APIRouter
 import inspect
 from pydantic import BaseModel 
@@ -111,6 +112,7 @@ def sendDrive(userInput : __sendDrive_input ):
             if file_list:
                 public_link = file_list[0]['alternateLink']
                 file_links.append( public_link )
+                subprocess.call( f'rm -rf {file_path}')
 
             else:
                 file_links.append('None')

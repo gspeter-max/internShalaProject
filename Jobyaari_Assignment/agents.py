@@ -1,45 +1,22 @@
 from oauth2client.tools import _CLIENT_SECRETS_MESSAGE
 import json
 import typing
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from groq import Groq 
 import requests
+from dotenv import load_dotenv 
 import os 
 from fastapi import APIRouter
 
 make_content_router = APIRouter()
 
-# tools = [
-#             {
-#                 "type" : "function",
-#                 "function": {
-#                     "name": "name  of the function",
-#                     "description": "description of function",
-#                     "parameters": {
-#                         "type" : "object",
-#                         "properties": {
-#                             "parameters1": {
-#                                 "type" : "string",
-#                                 "description": "description about the parameters1"
-#                                 },
-#                             "parameters2": {
-#                                 "type" : "string",
-#                                 "description": "description about the parameters2"
-#                                 }
-#                             },
-#                         required = ["parameter1","parameter2"]
-#                     }
-#                 }
-#             },
-#         ] 
-
-
+load_dotenv()
 async def create_prompt( raw_content , content_type ):
 
     if content_type.lower() == 'sheet':
 
         system_instruction = ''' 
-        You are an intelligent and precise data processing AI. Your primary function is to filter and format a raw list of strings into a structured, single-line Python 2D list string. You are an expert at applying logical rules to categorize data accurately.
+            You are an intelligent and precise data processing AI. Your primary function is to filter and format a raw list of strings into a structured, single-line Python 2D list string. You are an expert at applying logical rules to categorize data accurately.
 
             ### YOUR TASK
             I will provide a multi-line string containing two Python variables: a `raw_content` list of topics and a `job_keywords` list. Your job is to process every item in the `raw_content` list. For each item, you must decide if it is relevant by checking if it contains any of the words from the `job_keywords` list. Based on this decision, you will format each item into a 9-element inner list and combine them into a final 2D list string.
@@ -69,7 +46,7 @@ async def create_prompt( raw_content , content_type ):
 
 
             **Your required output (MUST BE A SINGLE LINE):**
-            `[["Idea Generation", "Posting Status", "GPT 1", "GPT 2", "Youtube Reel Link", "Instagram Post Content", "Blog Link", "Youtube Thumbnail Link", "Timestamp"], ["SSC CGL result 2024 tier 2", "Under Review", "Pending Categorization", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A"], ["Jawan movie box office collection", "Not Relevant", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A"]]`
+            [["Idea Generation", "Posting Status", "GPT 1", "GPT 2", "Youtube Reel Link", "Instagram Post Content", "Blog Link", "Youtube Thumbnail Link", "Timestamp"], ["SSC CGL result 2024 tier 2", "Under Review", "Pending Categorization", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A"], ["Jawan movie box office collection", "Not Relevant", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A"]]
 
             ### ABSOLUTE CONSTRAINTS
             -   Your response MUST be a single string.
@@ -79,7 +56,7 @@ async def create_prompt( raw_content , content_type ):
             -   Ensure all strings within the list are correctly quoted with double quotes.
 
         '''   
-    if content_type.lower() == 'insta':
+    elif content_type.lower() == 'insta':
         system_instruction = '''
             You are an expert Instagram copywriter. Your only job is to write a complete, ready-to-post caption with hashtags based on the user's topic.
 
@@ -89,7 +66,7 @@ async def create_prompt( raw_content , content_type ):
 
             1.  **NO HEADINGS:** Do NOT use any headings like "Caption:", "Visual Suggestion:", or "Hashtags:".
             2.  **CAPTION FIRST:**
-                *   Start with a strong, attention-grabbing hook, often using emojis (like 🚨 or ✨).
+                *   Start with a strong, attention-grabbing hook, often using emojis.
                 *   Write the main body using short, easy-to-read paragraphs with line breaks.
                 *   Integrate relevant emojis naturally throughout the text to add personality and break up sentences.
                 *   End the caption with a clear question or a call to action to encourage comments.
@@ -130,37 +107,27 @@ async def create_prompt( raw_content , content_type ):
 # ]
 # job_keywords = ['result', 'recruitment', 'admit card', 'vacancy', 'job', 'exam', 'notification']
 # '''
-class __generate_data_for_sheet_output( BaseModel ):
-    pass 
-
 class __generate_data_for_sheet_input( BaseModel ):
-    pass 
+    raw_content : typing.Union[typing.List, str]
 
-@make_content_router.post('/v2/getFormatedContent')
-async def generate_data_for_sheet():
-    raw_content = ''' [
-    "India vs Australia T20",
-    "SSC CGL result 2024 tier 2",
-    "Jawan movie box office collection",
-    "UP Police constable recruitment notification",
-    "Chandrayaan 3 update",
-    "IBPS Clerk admit card download",
-    "Diwali 2024 date",
-    "RRB Group D vacancy",
-    "State Bank of India job openings",
-    "G20 Summit Delhi",
-    "UPSC Civil Services exam date"
-    ]
-    job_keywords = ['result', 'recruitment', 'admit card', 'vacancy', 'job', 'exam', 'notification']    
-    '''
-    client = Groq( api_key = os.environ['GROQ_API_KEY'])
-    message = await create_prompt( raw_content , content_type= 'sheet') 
-    response  = client.chat.completions.create(
-        messages = message, 
-        model = 'llama-3.3-70b-versatile'
-        )
+class __generate_data_for_sheet_output( BaseModel ):
+    response : typing.Dict[str, typing.Union[typing.List, str]]
+
+@make_content_router.post('/v2/getFormatedContent', response_model= __generate_data_for_sheet_output )
+async def generate_data_for_sheet(userInput : __generate_data_for_sheet_input):
     
-    return eval(response.choices[0].message.content) 
+    try:
+        client = Groq( api_key = os.environ['GROQ_API_KEY'])
+        message = await create_prompt( userInput.raw_content , content_type= 'sheet')
+
+        response  = client.chat.completions.create(
+            messages = message, 
+            model = 'gemma2-9b-it'
+            )
+        
+        return {"response": {"content": response.choices[0].message.content}}
+    except Exception as e:
+        return {"response" : {"content": [], "error" : str(e)}}
 
 class __generate_insta_post_input( BaseModel ):
     title_data : typing.List[str]
