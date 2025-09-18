@@ -72,5 +72,6 @@ async def get_full_video(user_input : __getFullVideoInput):
         _final_video.write_videofile(f'Jobyaari_Assignment/{user_input.video_name}.mp4')
         subprocess.call('rm -rf Jobyaari_Assignment/video.mp4 Jobyaari_Assignment/music.mp3',shell = True )
         return {"response" : {"message": f"file is stored at {os.getcwd()}/video.mp4", "status": "success","full_path": f"Jobyaari_Assignment/{user_input.video_name}.mp4"}}
+    
     except Exception as e:
         return {"response": {"error": f"get Error during generating video : {e}", "status" : "failed"}}

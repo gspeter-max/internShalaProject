@@ -7,6 +7,7 @@ import typing
 from pydantic import BaseModel 
 from elevenlabs import ElevenLabs
 from fastapi import APIRouter
+from Jobyaari_Assignment.getScript import args_for_video_generation_content, get_content_for_video_generation
 
 Voice_router = APIRouter()
 load_dotenv()
@@ -24,12 +25,13 @@ async def __getVoice(voiceInput : __voice_input):
 
     if isinstance( voiceInput.user_prompt, str):
 
-        url = 'http://127.0.0.1:8000/v2/getVideoScript'
-        headers = {'Content-Type': "application/json"}
-        json_data = { "content": voiceInput.user_prompt}
-        __response = requests.post( url = url , headers = headers, json = json_data )
-
-        response_content = json.loads(__response.text)['full_script']
+        get_content_for_video_generation_input = args_for_video_generation_content(
+            content = voiceInput.user_prompt
+        )
+        response = get_content_for_video_generation(
+            video_generate_args= get_content_for_video_generation_input
+        )
+        response_content = response['full_script']
     
     elif isinstance( voiceInput.user_prompt, typing.Dict):
         response_content  = voiceInput.user_prompt['generated_content']

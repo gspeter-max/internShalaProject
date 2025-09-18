@@ -9,6 +9,10 @@ import requests
 from dotenv import load_dotenv 
 import os 
 from fastapi import APIRouter
+from Jobyaari_Assignment.getFullVideo import (
+    __getFullVideoInput,
+    get_full_video
+    )  
 
 make_content_router = APIRouter()
 
@@ -192,29 +196,16 @@ class __generate_youtube_videos_output( BaseModel ):
 @make_content_router.post('/v2/getYoutubeVideos', response_model= __generate_youtube_videos_output )
 async def generate_youtube_videos( userInput : __generate_youtube_videos_input ):
     youtube_video_paths = [] 
-    headers = {
-        "Content-Type": "application/json"
-    }
-
     for index,topic in enumerate(userInput.video_topics):
+        get_full_video_input = __getFullVideoInput(
+            user_prompt= f"generate video for {topic}",
+            voice_id= 'bIHbv24MWmeRgasZH58o',
+            video_name = f'video{index}'
+        )
 
-        json_data = {
-            "user_prompt": f"generate video for {topic}",
-            "voice_id": 'bIHbv24MWmeRgasZH58o',
-            "video_name": f'video{index}' 
-        }
         try:
-            response = requests.post(
-                'http://127.0.0.1:8000/v2/getFullVideo' ,
-                headers = headers,
-                json = json_data   
-                )
-            
-            _full_path = response.json()['response']
-            print('==========================================================')  # Debugging line --- IGNORE ---
-            print(f'full path is : {_full_path}')  # Debugging line --- IGNORE ---
-            print('==========================================================')  # Debugging line --- IGNORE ---
-            full_path = response.json()['response']['full_path']
+            response = await get_full_video(user_input = get_full_video_input)
+            full_path = response['response']['full_path']
             youtube_video_paths.append(full_path)
 
         except Exception as e:

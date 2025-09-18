@@ -7,6 +7,7 @@ import json
 from pydantic import BaseModel
 import typing 
 from dotenv import load_dotenv
+from Jobyaari_Assignment.getScript import args_for_video_generation_content, get_content_for_video_generation
 
 load_dotenv() 
 
@@ -25,13 +26,14 @@ async def get_video( user_input : __VideoInput):
         client = Client( token = os.environ.get('PEXELS_API_KEY')) 
 
         if isinstance( user_input.user_prompt, str): 
-            url = 'http://127.0.0.1:8000/v2/getVideoScript'
-            headers = {'Content-Type': "application/json"}
-            json_data = {"content": user_input.user_prompt}
-
-            __response = requests.post( url = url , headers = headers, json = json_data )
-            response_content = json.loads(__response.text)['full_script']
-
+            get_content_for_video_generation_input = args_for_video_generation_content(
+                content = user_input.user_prompt
+            )
+            response = get_content_for_video_generation(
+                video_generate_args= get_content_for_video_generation_input
+            )
+            response_content = response['full_script']
+            
         else: 
             response_content = user_input.user_prompt['generated_content']
 
