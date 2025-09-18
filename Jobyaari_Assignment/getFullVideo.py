@@ -28,7 +28,7 @@ async def get_full_video(user_input : __getFullVideoInput):
         content_generation_args = args_for_video_generation_content( content = user_input.user_prompt)
         generated_script = await get_content_for_video_generation( content_generation_args )
 
-        text_caption = moviepy.TextClip(text = generated_script.full_script, font_size = 20, color = 'black')
+        # text_caption = moviepy.TextClip(text = generated_script.full_script, font_size = 50, color = 'black', size = (1920, 1080), method = 'caption', align = 'South', bg_color = 'white')
         # voice_url = 'http://127.0.0.1:8000/v2/getVoice'
         # headers = {"Content-Type": "application/json"}
         # json_data = {
@@ -62,14 +62,14 @@ async def get_full_video(user_input : __getFullVideoInput):
         final_video = video_file.subclipped( end_time = final_duration )
 
         final_video = final_video.with_audio(final_audio)
-        final_text = text_caption.subclipped( final_video.duration )
+        # final_text = text_caption.subclipped( final_video.duration )
 
 
-        _final_video = CompositeVideoClip([final_video, final_text])
-        _final_video.duration = final_video.duration
+        # _final_video = CompositeVideoClip([final_video, final_text])
+        # _final_video.duration = final_video.duration
 
 
-        _final_video.write_videofile(f'Jobyaari_Assignment/{user_input.video_name}.mp4')
+        final_video.write_videofile(f'Jobyaari_Assignment/{user_input.video_name}.mp4')
         subprocess.call('rm -rf Jobyaari_Assignment/video.mp4 Jobyaari_Assignment/music.mp3',shell = True )
         return {"response" : {"message": f"file is stored at {os.getcwd()}/video.mp4", "status": "success","full_path": f"Jobyaari_Assignment/{user_input.video_name}.mp4"}}
     
