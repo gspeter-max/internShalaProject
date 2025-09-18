@@ -1,5 +1,7 @@
 from oauth2client.tools import _CLIENT_SECRETS_MESSAGE
 import json
+import ast 
+from Pexels import Client
 import typing
 from pydantic import BaseModel, Field
 from groq import Groq 
@@ -75,6 +77,34 @@ async def create_prompt( raw_content , content_type ):
                 *   Then, provide a list of 7-10 relevant hashtags. Each hashtag must start with #.
 
             Your entire response should be just the caption followed by the hashtags, and nothing else.
+        '''
+    
+    elif content_type.lower() == 'status':
+        system_instruction = '''
+            you get input as a list of strings. Your job is to classify each string into one of the following categories: "Admit Card", "Result", "Job Notification", or "Not Relevant or Other Topic use our super logic to classify".
+            you will return a single list of string that have the same length as the input list, where each element is the category corresponding to the input string at the same index.
+            Follow these strict rules for your response:
+                You are an expert data classifier. Your only job is to classify the given input into one of the following categories: "Admit Card", "Result", "Job Notification", or "Not Relevant".
+                Follow these strict rules for your response:
+                    NO HEADINGS: Do NOT use any headings like "Category:" or "Classification:".
+                    SINGLE LIST OUTPUT: Your response MUST be a single Python list of strings, formatted as a Python list (e.g., ["Admit Card", "Result", "Not Relevant"]). Do NOT use multiple lines or pretty-printing. The entire list must be on one line.
+                    NO ADDITIONAL TEXT: Do NOT add any text, explanations, or conversation before or after the list.
+                    CORRECT QUOTATION: Ensure all strings within the list are correctly quoted with double quotes.
+                Use the following examples to guide your classification:
+                    input : ssc cgl result	 output : Result
+                    input : ibps clerk recruitment notification	 output : Job Notification
+                    input : sbi po exam date	 output : Admit Card
+                    input : delhi weather today	 output : Not Relevant
+                    input : upsc civil services vacancy	 output : Job Notification
+                    input : bank holidays 2024	 output : Not Relevant
+                    input : railway exam admit card	 output : Admit Card
+                    input : ssc mts result 2024	 output : Result
+                    input : rajasthan police admit card	 output : Admit Card
+                    input : cat 2025	 output : Result
+                    input : aiims	 output : Job Notification
+                    input : rajasthan police	 output : Not Relevant
+                Your entire response should be just the category, and nothing else.
+    
         '''
     else:
         system_instruction = 'None'
@@ -180,12 +210,61 @@ async def generate_youtube_videos( userInput : __generate_youtube_videos_input )
                 json = json_data   
                 )
             
+            _full_path = response.json()['response']
+            print('==========================================================')  # Debugging line --- IGNORE ---
+            print(f'full path is : {_full_path}')  # Debugging line --- IGNORE ---
+            print('==========================================================')  # Debugging line --- IGNORE ---
             full_path = response.json()['response']['full_path']
+            youtube_video_paths.append(full_path)
 
         except Exception as e:
             youtube_video_paths.append('NOT_GENERATED')
             return  {"response": {"error": f"get Error during calling generate_youtube_videos function for generating video : {e}", "status" : "failed"}}
 
-        youtube_video_paths.append(full_path)
     
     return {"response" : {"videos_path" : youtube_video_paths, "Status": "Done"}}
+
+class content_generation_input( BaseModel ):
+    topic_titles : typing.List[str] 
+
+class content_generation_output( BaseModel ): 
+    response : typing.Dict[str, typing.Union[typing.List, str]] 
+
+@make_content_router.post('/v2/gpt1', response_model= content_generation_output )
+async def gpt1(userInput: content_generation_input ):
+    try:
+        client = Groq( api_key = os.environ['GROQ_API_KEY'])
+        message = await create_prompt( f'''{userInput.topic_titles}''' , content_type= 'status')
+        _response = client.chat.completions.create(
+            messages = message,
+            model = 'llama-3.3-70b-versatile'
+        )
+        response = ast.literal_eval(_response.choices[0].message.content)
+        return {"response": {"content": response }}
+
+    except Exception as e:
+        return {"response": {"content": [], "error": str(e)}}
+
+
+@make_content_router.post('/v2/generate_thumbnail', response_model= content_generation_output)
+async def get_thumbnail(userInput : content_generation_input):
+    thumbnail_paths = [] 
+    try:
+        client = Client( token = os.environ['PEXELS_API_KEY'])
+        for index, title in enumerate(userInput.topic_titles):
+            response = client.search_photos(
+                query = title ,
+                size = 'medium'
+            )
+            data_url = response.photos[0].src.original
+
+            response = requests.get( url = data_url )
+            with open(f'thumbnail_{index}.png','wb') as f:
+                f.write(response.content)
+            thumbnail_paths.append( os.path.abspath(f'thumbnail_{index}.png') )
+
+        return {"response": {"content": {"status": "👍 Done", "thumbnails": thumbnail_paths}}}
+
+    except Exception as e:
+        return {"response": {"content": [], "error": str(e)}}
+    

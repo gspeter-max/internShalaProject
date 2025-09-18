@@ -73,7 +73,7 @@ class __sendDrive_input( BaseModel ):
     fileStoredPath : typing.List[str]
 
 @google_send_router.post( '/v2/storeToDrive', response_model= __sendDrive_output)
-def sendDrive(userInput : __sendDrive_input ):
+async def sendDrive(userInput : __sendDrive_input ):
 
     try:
         file_links = []
